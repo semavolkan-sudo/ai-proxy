@@ -36,22 +36,74 @@ export default async function handler(req, res) {
     return 'Starter';
   }
 
+  function getCoupons() {
+    try { return JSON.parse(process.env.COUPONS || '[]'); }
+    catch(e) { return []; }
+  }
+
   if (req.method === 'POST') {
-    const { action, user, adminKey } = req.body;
+    const { action, user, adminKey, couponCode, email } = req.body;
 
     // ── Test kullanıcı doğrulama ──────────────────────────────
     if (action === 'verify-test' && user && user.email && user.pass) {
       const testUser = TEST_USERS[user.email.toLowerCase()];
-      if (!testUser) {
-        return res.status(200).json({ ok: false, reason: 'not_test_user' });
-      }
-      if (!TEST_PASS || user.pass !== TEST_PASS) {
-        return res.status(200).json({ ok: false, reason: 'wrong_pass' });
-      }
+      if (!testUser) return res.status(200).json({ ok: false, reason: 'not_test_user' });
+      if (!TEST_PASS || user.pass !== TEST_PASS) return res.status(200).json({ ok: false, reason: 'wrong_pass' });
       return res.status(200).json({ ok: true, name: testUser.name, plan: testUser.plan });
     }
 
-    // ── Kullanıcı kayıt / güncelleme ─────────────────────────
+    // ── Kupon doğrulama ───────────────────────────────────────
+    if (action === 'verify-coupon' && couponCode) {
+      const coupons = getCoupons();
+      const coupon = coupons.find(function(c) {
+        return c.code.toUpperCase() === couponCode.toUpperCase() && c.active;
+      });
+
+      if (!coupon) {
+        return res.status(200).json({ ok: false, reason: 'invalid' });
+      }
+
+      // Kişi bazlı atama kontrolü
+      if (coupon.assignedTo && coupon.assignedTo !== '') {
+        if (!email || email.toLowerCase() !== coupon.assignedTo.toLowerCase()) {
+          return res.status(200).json({ ok: false, reason: 'not_assigned', message: 'Bu kupon başka bir hesaba atanmıştır.' });
+        }
+      }
+
+      // Kullanım limiti kontrolü
+      var usedBy = coupon.usedBy || [];
+      if (coupon.maxUses && usedBy.length >= coupon.maxUses) {
+        return res.status(200).json({ ok: false, reason: 'expired', message: 'Bu kuponun kullanım limiti dolmuştur.' });
+      }
+
+      // Daha önce kullanmış mı
+      if (email && usedBy.includes(email.toLowerCase())) {
+        return res.status(200).json({ ok: false, reason: 'already_used', message: 'Bu kuponu daha önce kullandınız.' });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        code: coupon.code,
+        discount: coupon.discount,
+        type: coupon.type,
+        isFree: coupon.type === 'free' || coupon.discount === 100,
+        assignedTo: coupon.assignedTo || null
+      });
+    }
+
+    // ── Kupon kullanımını kaydet ──────────────────────────────
+    if (action === 'use-coupon' && couponCode && email && adminKey === ADMIN_KEY) {
+      // Not: Gerçek production'da COUPONS env var güncellenmeli
+      // Şimdilik sadece onay dön
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── Kupon listesi (admin) ─────────────────────────────────
+    if (action === 'list-coupons' && adminKey === ADMIN_KEY) {
+      return res.status(200).json({ coupons: getCoupons() });
+    }
+
+    // ── Kullanıcı kayıt ───────────────────────────────────────
     if (action === 'register' && user && user.email) {
       await sb('aica_users', {
         method: 'POST',
