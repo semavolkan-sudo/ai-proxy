@@ -9,23 +9,31 @@ const TOOLS = [
 ];
 
 const PROFILES = [
-  { key: "baslangic_kariyer",  level: "Yeni başlayan",    goal: "Kariyerini geliştirmek isteyen profesyonel" },
-  { key: "baslangic_is",       level: "Yeni başlayan",    goal: "Kendi işini kurmak isteyen girişimci" },
-  { key: "baslangic_freelance",level: "Yeni başlayan",    goal: "Freelance gelir elde etmek isteyen serbest çalışan" },
-  { key: "orta_kariyer",       level: "Orta seviye",      goal: "Kariyerinde hızla ilerlemek isteyen profesyonel" },
-  { key: "orta_is",            level: "Orta seviye",      goal: "İşini büyütmek isteyen girişimci" },
-  { key: "ileri_kariyer",      level: "İleri seviye",     goal: "Sektöründe AI lideri olmak isteyen uzman" },
-  { key: "default",            level: "Genel kullanıcı",  goal: "AI araçlarını öğrenmek isteyen kişi" }
+  { key: "baslangic_kariyer",   level: "Yeni başlayan",  goal: "Kariyerini geliştirmek isteyen profesyonel" },
+  { key: "baslangic_is",        level: "Yeni başlayan",  goal: "Kendi işini kurmak isteyen girişimci" },
+  { key: "baslangic_freelance", level: "Yeni başlayan",  goal: "Freelance gelir elde etmek isteyen serbest çalışan" },
+  { key: "orta_kariyer",        level: "Orta seviye",    goal: "Kariyerinde hızla ilerlemek isteyen profesyonel" },
+  { key: "orta_is",             level: "Orta seviye",    goal: "İşini büyütmek isteyen girişimci" },
+  { key: "ileri_kariyer",       level: "İleri seviye",   goal: "Sektöründe AI lideri olmak isteyen uzman" },
+  { key: "default",             level: "Genel kullanıcı",goal: "AI araçlarını öğrenmek isteyen kişi" }
 ];
+
+const FORMAT = `Her kart şu yapıda olmalı:
+- 4-5 cümle detaylı açıklama
+- Gerçek ve uygulanabilir senaryo
+- Her adımın yanında somut örnek
+
+SADECE JSON:
+[{"title":"başlık","content":"detaylı açıklama\\n\\n💡 Gerçek Örnek: [isim ve meslek belirt] nasıl kullandı — somut sonuç\\n\\n📊 Adımlar:\\n1️⃣ [Adım adı]: [Bu adımın somut örneği — ne yazılır, ne tıklanır, ne yapılır]\\n2️⃣ [Adım adı]: [Bu adımın somut örneği — gerçek bir komut veya eylem]\\n3️⃣ [Adım adı]: [Bu adımın somut örneği — beklenen sonuç ne olur]\\n\\n⚡ Pro İpucu: [Çoğu kullanıcının bilmediği, zaman kazandıran somut ipucu — rakam veya oran içersin]","icon":"emoji"}]`;
 
 function buildPrompts(tool, profile) {
   const ctx = `Öğrenci profili: ${profile.level}, ${profile.goal}`;
   return [
-    `Sen dünyaca tanınan bir AI eğitim uzmanısın. ${tool} aracını öğretiyorsun.\n${ctx}\n\nBu profile ÖZEL 5 ders kartı üret:\n1. Bu araç bu kişi için neden önemli — somut kariyer/iş faydası\n2. Bu profile özel ilk kurulum ve kullanım senaryosu\n3. Bu kişinin işinde kullanabileceği en kritik özellik\n4. Bu profile özel prompt ve komut şablonları\n5. Bu kişinin sık yaptığı hatalar ve çözümleri\n\nHer kart:\n- 4-5 cümle açıklama\n- Bu profile uygun gerçek senaryo\n- Adım adım talimat 1️⃣2️⃣3️⃣\n- Bu kişiye özel pro ipucu\n\nSADECE JSON:\n[{"title":"başlık","content":"açıklama\\n\\n💡 Gerçek Örnek: örnek\\n\\n📊 Adımlar:\\n1️⃣ adım\\n2️⃣ adım\\n3️⃣ adım\\n\\n⚡ Pro İpucu: ipucu","icon":"emoji"}]`,
+    `Sen dünyaca tanınan bir AI eğitim uzmanısın. ${tool} aracını öğretiyorsun.\n${ctx}\n\nBu profile ÖZEL 5 ders kartı üret:\n1. Bu araç bu kişi için neden önemli — somut kariyer/iş faydası\n2. Bu profile özel ilk kurulum ve kullanım senaryosu\n3. Bu kişinin işinde kullanabileceği en kritik özellik\n4. Bu profile özel prompt ve komut şablonları\n5. Bu kişinin sık yaptığı hatalar ve çözümleri\n\n${FORMAT}`,
 
-    `Sen fütürist AI danışmanısın. ${tool} için içerik üretiyorsun.\n${ctx}\n\nBu profile ÖZEL 5 ders kartı üret:\n1. Bu kişi için en değerli entegrasyonlar ve otomasyon senaryoları\n2. Bu profile özel iş akışı otomasyonu\n3. Bu kişinin sektöründe rekabet avantajı\n4. Bu profile özel gelir/verimlilik artışı senaryoları\n5. Bu kişi için 2025-2030 fırsatları\n\nHer kart:\n- Gerçek dünya verisi ve rakam içeren\n- Bu kişinin mesleki bağlamına uygun\n- Aksiyon alınabilir adımlar\n- ROI veya zaman tasarrufu rakamı\n\nSADECE JSON:\n[{"title":"başlık","content":"açıklama\\n\\n💡 Gerçek Örnek: örnek\\n\\n📊 Adımlar:\\n1️⃣ adım\\n2️⃣ adım\\n3️⃣ adım\\n\\n⚡ Pro İpucu: ipucu","icon":"emoji"}]`,
+    `Sen fütürist AI danışmanısın. ${tool} için içerik üretiyorsun.\n${ctx}\n\nBu profile ÖZEL 5 kart üret:\n1. Bu kişi için en değerli entegrasyonlar ve otomasyon senaryoları\n2. Bu profile özel iş akışı otomasyonu — adım adım kurulum\n3. Bu kişinin sektöründe rekabet avantajı\n4. Bu profile özel gelir/verimlilik artışı senaryoları\n5. Bu kişi için 2025-2030 fırsatları\n\n${FORMAT}`,
 
-    `Sen hem ${tool} uzmanısın hem AI pedagogusun.\n${ctx}\n\nBu profile ÖZEL 5 eğitim kartı üret:\n1. Bu kişi için kişiselleştirilmiş 30 günlük öğrenme planı\n2. Bu profile özel pratik egzersizler ve görevler\n3. Bu seviyedeki kişilerin en çok kafasını karıştıran konular\n4. Bu kişinin bir sonraki seviyeye geçmesi için yol haritası\n5. Bu profile özel başarı hikayeleri ve ilham kaynakları\n\nHer kart MOTİVE EDİCİ ve KİŞİSELLEŞTİRİLMİŞ:\n- Doğrudan bu kişiye hitap eden, sen dili\n- Bu kişinin hedeflerine bağlı somut çıktılar\n- Başarı kriterleri ve ölçüm yöntemleri\n\nSADECE JSON:\n[{"title":"başlık","content":"açıklama\\n\\n💡 Gerçek Örnek: örnek\\n\\n📊 Adımlar:\\n1️⃣ adım\\n2️⃣ adım\\n3️⃣ adım\\n\\n⚡ Pro İpucu: ipucu","icon":"emoji"}]`
+    `Sen hem ${tool} uzmanısın hem AI pedagogusun.\n${ctx}\n\nBu profile ÖZEL 5 eğitim kartı üret:\n1. Bu kişi için kişiselleştirilmiş 30 günlük öğrenme planı\n2. Bu profile özel pratik egzersizler ve görevler\n3. Bu seviyedeki kişilerin en çok kafasını karıştıran konular\n4. Bu kişinin bir sonraki seviyeye geçmesi için yol haritası\n5. Bu profile özel başarı hikayeleri ve ilham kaynakları\n\n${FORMAT}`
   ];
 }
 
@@ -74,7 +82,6 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // Belirli bir tool veya profil parametresi varsa sadece onu işle
   const targetTool = req.query.tool;
   const targetProfile = req.query.profile;
 
@@ -94,7 +101,7 @@ export default async function handler(req, res) {
         console.log(`Generating: ${tool} / ${profile.key}`);
         const cards = await generateForProfile(tool, profile);
         if (cards.length === 0) {
-          results.push({ tool, profile: profile.key, status: 'failed' });
+          results.push({ tool, profile: profile.key, status: 'failed', count: 0 });
           continue;
         }
 
@@ -126,7 +133,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Eski içerikleri sil (2 günden eski)
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 2);
   const cutoffDate = cutoff.toISOString().split('T')[0];
