@@ -7,6 +7,13 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
   const ADMIN_KEY = process.env.ADMIN_KEY;
+  const TEST_PASS = process.env.TEST_USER_PASS;
+
+  const TEST_USERS = {
+    'test@aicert.com':    { name: 'Test',         plan: 'Starter'  },
+    'testpro@aicert.com': { name: 'TestPro',      plan: 'Pro'      },
+    'testbiz@aicert.com': { name: 'TestBusiness', plan: 'Business' },
+  };
 
   async function sb(path, options) {
     const r = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
@@ -32,6 +39,19 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { action, user, adminKey } = req.body;
 
+    // ── Test kullanıcı doğrulama ──────────────────────────────
+    if (action === 'verify-test' && user && user.email && user.pass) {
+      const testUser = TEST_USERS[user.email.toLowerCase()];
+      if (!testUser) {
+        return res.status(200).json({ ok: false, reason: 'not_test_user' });
+      }
+      if (!TEST_PASS || user.pass !== TEST_PASS) {
+        return res.status(200).json({ ok: false, reason: 'wrong_pass' });
+      }
+      return res.status(200).json({ ok: true, name: testUser.name, plan: testUser.plan });
+    }
+
+    // ── Kullanıcı kayıt / güncelleme ─────────────────────────
     if (action === 'register' && user && user.email) {
       await sb('aica_users', {
         method: 'POST',
@@ -49,6 +69,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ── Kullanıcı güncelleme ──────────────────────────────────
     if (action === 'update' && user && user.email) {
       await sb('aica_users?email=eq.' + encodeURIComponent(user.email), {
         method: 'PATCH',
@@ -65,6 +86,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ── Admin: kullanıcı listesi ──────────────────────────────
     if (action === 'list' && adminKey === ADMIN_KEY) {
       const data = await sb('aica_users?order=created_at.desc', {
         method: 'GET',
