@@ -1,13 +1,5 @@
 export const config = { maxDuration: 60 };
 
-const TOOLS = [
-  "ChatGPT","Claude","Gemini","Perplexity","Deepseek","Copilot","Grok",
-  "Midjourney","Leonardo AI","Stable Diffusion","Canva AI",
-  "ElevenLabs","Runway ML","Make.com","Zapier AI","Notion AI",
-  "Lovable","Manus","Meta AI","Assembly AI",
-  "Prompt Engineering","AI İş Stratejisi"
-];
-
 const PROFILES = [
   { key:"baslangic_kariyer",   level:"Yeni başlayan",   goal:"Kariyerini geliştirmek isteyen profesyonel" },
   { key:"baslangic_is",        level:"Yeni başlayan",   goal:"Kendi işini kurmak isteyen girişimci" },
@@ -21,13 +13,9 @@ const PROFILES = [
 const FORMAT = `SADECE JSON döndür, başka hiçbir şey yazma:
 [{"title":"başlık","content":"detaylı açıklama\\n\\n💡 Gerçek Örnek: [isim/meslek] somut senaryo\\n\\n📊 Adımlar:\\n1️⃣ [Adım]: [somut örnek]\\n2️⃣ [Adım]: [somut örnek]\\n3️⃣ [Adım]: [somut örnek]\\n\\n⚡ Pro İpucu: [rakam/oran içeren ipucu]","icon":"emoji"}]`;
 
-function buildPrompts(tool, profile) {
+function buildPrompt(tool, profile) {
   const ctx = `Öğrenci: ${profile.level}, ${profile.goal}`;
-  return [
-    `Sen dünyaca tanınan AI eğitim uzmanısın. ${tool} aracını öğretiyorsun.\n${ctx}\n\n5 ders kartı üret:\n1. Bu araç bu kişi için neden kritik — somut iş/kariyer faydası\n2. Profile özel ilk kurulum ve hızlı başlangıç\n3. Bu kişinin günlük işinde en çok kullanacağı özellik\n4. Profile özel prompt şablonları ve hazır komutlar\n5. Bu seviyedeki kişilerin sık yaptığı hatalar\n\n${FORMAT}`,
-    `Sen fütürist AI strateji danışmanısın. ${tool} için içerik üretiyorsun.\n${ctx}\n\n5 kart üret:\n1. Bu kişi için en kritik entegrasyonlar (Zapier/Make/API)\n2. Profile özel iş akışı otomasyonu — adım adım\n3. Bu kişinin sektöründe rekabet avantajı — rakamlarla\n4. Gelir/verimlilik artışı senaryoları — somut ROI\n5. 2025-2030 fırsatları — bu kişi için özel\n\n${FORMAT}`,
-    `Sen hem ${tool} uzmanısın hem AI pedagogusun.\n${ctx}\n\n5 eğitim kartı üret:\n1. Bu profile özel 30 günlük öğrenme planı\n2. Hemen yapılabilecek 3 pratik egzersiz\n3. Bu seviyedeki en çok sorulan sorular ve cevapları\n4. Bir sonraki seviyeye geçiş kriterleri\n5. Bu profile özel başarı hikayeleri — isimli ve detaylı\n\n${FORMAT}`
-  ];
+  return `Sen dünyaca tanınan AI eğitim uzmanısın. ${tool} aracını öğretiyorsun.\n${ctx}\n\n15 ders kartı üret:\n1-5: Temel kullanım, kurulum, kritik özellikler, prompt şablonları, sık hatalar\n6-10: Entegrasyonlar, otomasyon, rekabet avantajı, ROI senaryoları, 2025-2030 fırsatları\n11-15: 30 günlük plan, pratik egzersizler, sık sorular, sonraki seviye, başarı hikayeleri\n\nHer kart için profile özel, somut, uygulanabilir içerik üret.\n\n${FORMAT}`;
 }
 
 async function callAnthropic(prompt) {
@@ -40,7 +28,7 @@ async function callAnthropic(prompt) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }]
     })
   });
@@ -67,12 +55,9 @@ async function sbFetch(path, options = {}) {
       ...(options.headers || {})
     }
   });
-  if (options.returnJson !== false) {
-    const text = await r.text();
-    try { return { ok: r.ok, status: r.status, data: JSON.parse(text) }; }
-    catch { return { ok: r.ok, status: r.status, data: text }; }
-  }
-  return { ok: r.ok, status: r.status };
+  const text = await r.text();
+  try { return { ok: r.ok, status: r.status, data: JSON.parse(text) }; }
+  catch { return { ok: r.ok, status: r.status, data: text }; }
 }
 
 export default async function handler(req, res) {
@@ -85,15 +70,16 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const targetTool = req.query.tool;
-  const targetProfile = req.query.profile;
+  const tool = req.query.tool;
+  const profileKey = req.query.profile || 'default';
   const triggeredBy = req.query.trigger || 'cron';
-  const today = new Date().toISOString().split('T')[0];
 
-  const toolsToProcess = targetTool ? [targetTool] : TOOLS;
-  const profilesToProcess = targetProfile
-    ? PROFILES.filter(p => p.key === targetProfile)
-    : PROFILES;
+  if (!tool) {
+    return res.status(400).json({ error: 'tool parameter required. Call this endpoint once per tool.' });
+  }
+
+  const profile = PROFILES.find(p => p.key === profileKey) || PROFILES.find(p => p.key === 'default');
+  const today = new Date().toISOString().split('T')[0];
 
   const logResp = await sbFetch('batch_logs', {
     method: 'POST',
@@ -102,78 +88,71 @@ export default async function handler(req, res) {
       batch_date: today,
       status: 'running',
       triggered_by: triggeredBy,
-      total_tools: toolsToProcess.length,
-      total_profiles: profilesToProcess.length
+      total_tools: 1,
+      total_profiles: 1
     })
   });
 
   const logId = logResp.data && logResp.data[0] ? logResp.data[0].id : null;
-  const results = [];
-  let successCount = 0;
-  let failCount = 0;
 
-  for (const tool of toolsToProcess) {
-    for (const profile of profilesToProcess) {
-      const prompts = buildPrompts(tool, profile);
-      const allCards = [];
+  try {
+    const prompt = buildPrompt(tool, profile);
+    const cards = await callAnthropic(prompt);
 
-      for (let i = 0; i < prompts.length; i++) {
-        try {
-          const cards = await callAnthropic(prompts[i]);
-          allCards.push(...cards);
-          if (i < prompts.length - 1) await new Promise(r => setTimeout(r, 1500));
-        } catch(e) {
-          console.error(`Batch ${i} failed: ${tool}/${profile.key}:`, e.message);
-        }
-      }
-
-      if (allCards.length > 0) {
-        const sbResp = await sbFetch('lesson_cards', {
-          method: 'POST',
-          prefer: 'resolution=merge-duplicates,return=minimal',
-          body: JSON.stringify({
-            tool_name: tool,
-            profile_key: profile.key,
-            batch_date: today,
-            cards: allCards,
-            updated_at: new Date().toISOString()
-          })
+    if (cards.length === 0) {
+      if (logId) {
+        await sbFetch(`batch_logs?id=eq.${logId}`, {
+          method: 'PATCH',
+          prefer: 'return=minimal',
+          body: JSON.stringify({ finished_at: new Date().toISOString(), status: 'failed', fail_count: 1 })
         });
-        if (sbResp.ok) successCount++; else failCount++;
-        results.push({ tool, profile: profile.key, status: sbResp.ok ? 'ok' : 'db-error', count: allCards.length });
-      } else {
-        failCount++;
-        results.push({ tool, profile: profile.key, status: 'failed', count: 0 });
       }
+      return res.status(200).json({ tool, profile: profileKey, status: 'failed', count: 0 });
     }
-  }
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 2);
-  await sbFetch(`lesson_cards?batch_date=lt.${cutoff.toISOString().split('T')[0]}`, {
-    method: 'DELETE', returnJson: false
-  });
-
-  if (logId) {
-    await sbFetch(`batch_logs?id=eq.${logId}`, {
-      method: 'PATCH',
-      prefer: 'return=minimal',
+    const sbResp = await sbFetch('lesson_cards', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates,return=minimal',
       body: JSON.stringify({
-        finished_at: new Date().toISOString(),
-        status: failCount === 0 ? 'success' : successCount > 0 ? 'partial' : 'failed',
-        success_count: successCount,
-        fail_count: failCount,
-        results
+        tool_name: tool,
+        profile_key: profileKey,
+        batch_date: today,
+        cards,
+        updated_at: new Date().toISOString()
       })
     });
-  }
 
-  return res.status(200).json({
-    date: today,
-    triggered_by: triggeredBy,
-    success: successCount,
-    failed: failCount,
-    total: results.length,
-    results
-  });
+    if (logId) {
+      await sbFetch(`batch_logs?id=eq.${logId}`, {
+        method: 'PATCH',
+        prefer: 'return=minimal',
+        body: JSON.stringify({
+          finished_at: new Date().toISOString(),
+          status: sbResp.ok ? 'success' : 'db-error',
+          success_count: sbResp.ok ? 1 : 0,
+          fail_count: sbResp.ok ? 0 : 1,
+          results: [{ tool, profile: profileKey, count: cards.length }]
+        })
+      });
+    }
+
+    return res.status(200).json({
+      tool,
+      profile: profileKey,
+      date: today,
+      triggered_by: triggeredBy,
+      status: sbResp.ok ? 'ok' : 'db-error',
+      count: cards.length
+    });
+
+  } catch(e) {
+    if (logId) {
+      await sbFetch(`batch_logs?id=eq.${logId}`, {
+        method: 'PATCH',
+        prefer: 'return=minimal',
+        body: JSON.stringify({ finished_at: new Date().toISOString(), status: 'failed', error: e.message })
+      });
+    }
+    return res.status(500).json({ error: e.message });
+  }
 }
