@@ -1,6 +1,8 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const tool = req.query.tool || (req.body && req.body.tool);
@@ -12,39 +14,42 @@ export default async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
   const today = new Date().toISOString().split('T')[0];
 
-  // Önce profile'a özel içerik ara
-  let resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/lesson_cards?tool_name=eq.${encodeURIComponent(tool)}&profile_key=eq.${encodeURIComponent(profileKey)}&batch_date=eq.${today}&limit=1`,
-    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-  );
-  let data = await resp.json();
-
-  // Profile'a özel yoksa default içeriği getir
-  if (!data || !data.length) {
-    resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/lesson_cards?tool_name=eq.${encodeURIComponent(tool)}&profile_key=eq.default&batch_date=eq.${today}&limit=1`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-    );
-    data = await resp.json();
+  async function query(filter) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/lesson_cards?${filter}&limit=1`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    const data = await r.json();
+    return Array.isArray(data) && data.length > 0 ? data[0] : null;
   }
 
-  // Bugün yoksa dünkü içeriği getir
-  if (!data || !data.length) {
-    resp = await fetch(
+  // 1. Bugün + profile'a özel
+  let row = await query(`tool_name=eq.${encodeURIComponent(tool)}&profile_key=eq.${encodeURIComponent(profileKey)}&batch_date=eq.${today}`);
+
+  // 2. Bugün + default
+  if (!row && profileKey !== 'default') {
+    row = await query(`tool_name=eq.${encodeURIComponent(tool)}&profile_key=eq.default&batch_date=eq.${today}`);
+  }
+
+  // 3. En son tarihli
+  if (!row) {
+    const r = await fetch(
       `${SUPABASE_URL}/rest/v1/lesson_cards?tool_name=eq.${encodeURIComponent(tool)}&order=batch_date.desc&limit=1`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
-    data = await resp.json();
+    const data = await r.json();
+    row = Array.isArray(data) && data.length > 0 ? data[0] : null;
   }
 
-  if (!data || !data.length) {
-    return res.status(404).json({ cards: [], message: 'No cards available' });
-  }
+  if (!row) return res.status(404).json({ cards: [], message: 'No cards available' });
 
   return res.status(200).json({
-    cards: data[0].cards,
-    date: data[0].batch_date,
-    profile: data[0].profile_key,
-    tool
+    cards: row.cards,
+    date: row.batch_date,
+    profile: row.profile_key,
+    tool,
+    count: row.cards ? row.cards.length : 0
   });
 }
