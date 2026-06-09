@@ -20,6 +20,8 @@ async function sbFetch(path, options = {}) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-cron-key');
+  res.setHeader('Access-Control-Max-Age', '86400');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const cronKey = req.headers['x-cron-key'] || req.query.key;
@@ -27,13 +29,15 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // POST: kartları kaydet
+  const today = new Date().toISOString().split('T')[0];
+
   if (req.method === 'POST') {
-    const { tool, profileKey, cards, triggeredBy } = req.body;
+    const body = req.body || {};
+    const { tool, profileKey, cards, triggeredBy } = body;
+
     if (!tool || !cards || !cards.length) {
       return res.status(400).json({ error: 'tool and cards required' });
     }
-    const today = new Date().toISOString().split('T')[0];
 
     const sbResp = await sbFetch('lesson_cards', {
       method: 'POST',
@@ -67,8 +71,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: sbResp.ok, tool, count: cards.length });
   }
 
-  // GET: sadece hangi araçların bugün üretilmediğini döndür
-  const today = new Date().toISOString().split('T')[0];
   const TOOLS = [
     "ChatGPT","Claude","Gemini","Perplexity","Deepseek","Copilot","Grok",
     "Midjourney","Leonardo AI","Stable Diffusion","Canva AI",
