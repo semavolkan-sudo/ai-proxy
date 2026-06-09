@@ -1,4 +1,4 @@
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 10 };
 
 const PROFILES = [
   { key:"baslangic_kariyer",   level:"Yeni başlayan",   goal:"Kariyerini geliştirmek isteyen profesyonel" },
@@ -9,39 +9,6 @@ const PROFILES = [
   { key:"ileri_kariyer",       level:"İleri seviye",    goal:"Sektöründe AI lideri olmak isteyen uzman" },
   { key:"default",             level:"Genel kullanıcı", goal:"AI araçlarını öğrenmek isteyen kişi" }
 ];
-
-const FORMAT = `SADECE JSON döndür, başka hiçbir şey yazma:
-[{"title":"başlık","content":"detaylı açıklama\\n\\n💡 Gerçek Örnek: [isim/meslek] somut senaryo\\n\\n📊 Adımlar:\\n1️⃣ [Adım]: [somut örnek]\\n2️⃣ [Adım]: [somut örnek]\\n3️⃣ [Adım]: [somut örnek]\\n\\n⚡ Pro İpucu: [rakam/oran içeren ipucu]","icon":"emoji"}]`;
-
-function buildPrompt(tool, profile) {
-  const ctx = `Öğrenci: ${profile.level}, ${profile.goal}`;
-  return `Sen dünyaca tanınan AI eğitim uzmanısın. ${tool} aracını öğretiyorsun.\n${ctx}\n\n15 ders kartı üret:\n1-5: Temel kullanım, kurulum, kritik özellikler, prompt şablonları, sık hatalar\n6-10: Entegrasyonlar, otomasyon, rekabet avantajı, ROI senaryoları, 2025-2030 fırsatları\n11-15: 30 günlük plan, pratik egzersizler, sık sorular, sonraki seviye, başarı hikayeleri\n\nHer kart için profile özel, somut, uygulanabilir içerik üret.\n\n${FORMAT}`;
-}
-
-async function callAnthropic(prompt) {
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-  const data = await resp.json();
-  if (data.error) throw new Error(JSON.stringify(data.error));
-  const text = (data.content || []).map(c => c.text || '').join('');
-  const clean = text.replace(/```json|```/g, '').trim();
-  const start = clean.indexOf('[');
-  const end = clean.lastIndexOf(']');
-  if (start === -1 || end === -1) return [];
-  const parsed = JSON.parse(clean.slice(start, end + 1));
-  return Array.isArray(parsed) ? parsed : [];
-}
 
 async function sbFetch(path, options = {}) {
   const url = process.env.SUPABASE_URL + '/rest/v1/' + path;
@@ -75,42 +42,42 @@ export default async function handler(req, res) {
   const triggeredBy = req.query.trigger || 'cron';
 
   if (!tool) {
-    return res.status(400).json({ error: 'tool parameter required. Call this endpoint once per tool.' });
+    return res.status(400).json({ error: 'tool parameter required' });
   }
 
-  const profile = PROFILES.find(p => p.key === profileKey) || PROFILES.find(p => p.key === 'default');
+  const profile = PROFILES.find(p => p.key === profileKey) || PROFILES[6];
   const today = new Date().toISOString().split('T')[0];
 
-  const logResp = await sbFetch('batch_logs', {
-    method: 'POST',
-    prefer: 'return=representation',
-    body: JSON.stringify({
-      batch_date: today,
-      status: 'running',
-      triggered_by: triggeredBy,
-      total_tools: 1,
-      total_profiles: 1
-    })
-  });
-
-  const logId = logResp.data && logResp.data[0] ? logResp.data[0].id : null;
+  const prompt = `Sen AI eğitim uzmanısın. ${tool} aracını öğretiyorsun.\nÖğrenci: ${profile.level}, ${profile.goal}\n\n5 ders kartı üret. Her kart somut, uygulanabilir, profile özel olmalı.\n\nSADECE JSON döndür:\n[{"title":"başlık","content":"açıklama\\n\\n💡 Örnek: somut senaryo\\n\\n📊 Adımlar:\\n1️⃣ adım\\n2️⃣ adım\\n3️⃣ adım\\n\\n⚡ İpucu: somut ipucu","icon":"emoji"}]`;
 
   try {
-    const prompt = buildPrompt(tool, profile);
-    const cards = await callAnthropic(prompt);
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
 
-    if (cards.length === 0) {
-      if (logId) {
-        await sbFetch(`batch_logs?id=eq.${logId}`, {
-          method: 'PATCH',
-          prefer: 'return=minimal',
-          body: JSON.stringify({ finished_at: new Date().toISOString(), status: 'failed', fail_count: 1 })
-        });
-      }
-      return res.status(200).json({ tool, profile: profileKey, status: 'failed', count: 0 });
-    }
+    const data = await resp.json();
+    if (data.error) throw new Error(JSON.stringify(data.error));
 
-    const sbResp = await sbFetch('lesson_cards', {
+    const text = (data.content || []).map(c => c.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const start = clean.indexOf('[');
+    const end = clean.lastIndexOf(']');
+    if (start === -1 || end === -1) throw new Error('No JSON array found');
+
+    const cards = JSON.parse(clean.slice(start, end + 1));
+    if (!Array.isArray(cards) || cards.length === 0) throw new Error('Empty cards');
+
+    await sbFetch('lesson_cards', {
       method: 'POST',
       prefer: 'resolution=merge-duplicates,return=minimal',
       body: JSON.stringify({
@@ -122,37 +89,45 @@ export default async function handler(req, res) {
       })
     });
 
-    if (logId) {
-      await sbFetch(`batch_logs?id=eq.${logId}`, {
-        method: 'PATCH',
-        prefer: 'return=minimal',
-        body: JSON.stringify({
-          finished_at: new Date().toISOString(),
-          status: sbResp.ok ? 'success' : 'db-error',
-          success_count: sbResp.ok ? 1 : 0,
-          fail_count: sbResp.ok ? 0 : 1,
-          results: [{ tool, profile: profileKey, count: cards.length }]
-        })
-      });
-    }
+    await sbFetch('batch_logs', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({
+        batch_date: today,
+        started_at: new Date().toISOString(),
+        finished_at: new Date().toISOString(),
+        status: 'success',
+        triggered_by: triggeredBy,
+        total_tools: 1,
+        total_profiles: 1,
+        success_count: 1,
+        fail_count: 0,
+        results: [{ tool, profile: profileKey, count: cards.length }]
+      })
+    });
 
     return res.status(200).json({
-      tool,
-      profile: profileKey,
-      date: today,
-      triggered_by: triggeredBy,
-      status: sbResp.ok ? 'ok' : 'db-error',
-      count: cards.length
+      tool, profile: profileKey, date: today,
+      status: 'ok', count: cards.length
     });
 
   } catch(e) {
-    if (logId) {
-      await sbFetch(`batch_logs?id=eq.${logId}`, {
-        method: 'PATCH',
-        prefer: 'return=minimal',
-        body: JSON.stringify({ finished_at: new Date().toISOString(), status: 'failed', error: e.message })
-      });
-    }
+    await sbFetch('batch_logs', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({
+        batch_date: today,
+        started_at: new Date().toISOString(),
+        finished_at: new Date().toISOString(),
+        status: 'failed',
+        triggered_by: triggeredBy,
+        total_tools: 1,
+        total_profiles: 1,
+        success_count: 0,
+        fail_count: 1,
+        error: e.message
+      })
+    });
     return res.status(500).json({ error: e.message });
   }
 }
