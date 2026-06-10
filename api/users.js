@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -15,18 +15,20 @@ export default async function handler(req, res) {
     'testbiz@aicert.com': { name: 'TestBusiness', plan: 'Business' },
   };
 
-  async function sb(path, options) {
+  async function sb(path, options = {}) {
     const r = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_KEY,
         'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Prefer': 'resolution=merge-duplicates,return=representation',
+        'Prefer': options.prefer || 'resolution=merge-duplicates,return=representation',
         ...(options.headers || {})
       }
     });
-    return r.json();
+    const text = await r.text();
+    try { return { ok: r.ok, status: r.status, data: JSON.parse(text) }; }
+    catch { return { ok: r.ok, status: r.status, data: text }; }
   }
 
   function normalizePlan(plan) {
@@ -42,7 +44,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { action, user, adminKey, couponCode, email } = req.body;
+    const { action, user, adminKey, couponCode, email } = req.body || {};
 
     // ── Test kullanıcı doğrulama ──────────────────────────
     if (action === 'verify-test' && user && user.email && user.pass) {
@@ -56,37 +58,73 @@ export default async function handler(req, res) {
     if (action === 'check-email') {
       const emailToCheck = (user && user.email) || email;
       if (!emailToCheck) return res.status(200).json({ exists: false });
-      const data = await sb(
+      const result = await sb(
         'aica_users?email=eq.' + encodeURIComponent(emailToCheck.toLowerCase().trim()),
         { method: 'GET', headers: { 'Prefer': '' } }
       );
-      const exists = Array.isArray(data) && data.length > 0;
+      const exists = Array.isArray(result.data) && result.data.length > 0;
       return res.status(200).json({ exists });
+    }
+
+    // ── Şifre sıfırlama ───────────────────────────────────
+    if (action === 'reset-password') {
+      const resetEmail = (user && user.email) || email;
+      if (!resetEmail) return res.status(200).json({ ok: false, reason: 'email_required' });
+
+      // Kullanıcı var mı kontrol et
+      const result = await sb(
+        'aica_users?email=eq.' + encodeURIComponent(resetEmail.toLowerCase().trim()),
+        { method: 'GET', headers: { 'Prefer': '' } }
+      );
+      const userExists = Array.isArray(result.data) && result.data.length > 0;
+
+      if (!userExists) {
+        // Güvenlik için kullanıcı yoksa da ok dön
+        return res.status(200).json({ ok: true });
+      }
+
+      // Supabase Auth ile şifre sıfırlama e-postası gönder
+      const authResp = await fetch(SUPABASE_URL + '/auth/v1/recover', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY
+        },
+        body: JSON.stringify({
+          email: resetEmail.toLowerCase().trim(),
+          redirect_to: 'https://ai-cert-academy.lovable.app'
+        })
+      });
+
+      return res.status(200).json({ ok: authResp.ok });
     }
 
     // ── Kupon doğrulama ───────────────────────────────────
     if (action === 'verify-coupon' && couponCode) {
       const coupons = getCoupons();
-      const coupon = coupons.find(function(c) {
-        return c.code.toUpperCase() === couponCode.toUpperCase() && c.active;
-      });
-      if (!coupon) {
-        return res.status(200).json({ ok: false, reason: 'invalid', message: 'Geçersiz kupon kodu.' });
-      }
+      const coupon = coupons.find(c =>
+        c.code.toUpperCase() === couponCode.toUpperCase() && c.active
+      );
+      if (!coupon) return res.status(200).json({ ok: false, reason: 'invalid', message: 'Geçersiz kupon kodu.' });
+
       if (coupon.assignedTo && coupon.assignedTo !== '') {
         const userEmail = (user && user.email) || email || '';
         if (!userEmail || userEmail.toLowerCase() !== coupon.assignedTo.toLowerCase()) {
           return res.status(200).json({ ok: false, reason: 'not_assigned', message: 'Bu kupon başka bir hesaba atanmıştır.' });
         }
       }
+
       const usedBy = coupon.usedBy || [];
       if (coupon.maxUses && usedBy.length >= coupon.maxUses) {
         return res.status(200).json({ ok: false, reason: 'expired', message: 'Bu kuponun kullanım limiti dolmuştur.' });
       }
+
       const userEmail2 = (user && user.email) || email || '';
       if (userEmail2 && usedBy.includes(userEmail2.toLowerCase())) {
         return res.status(200).json({ ok: false, reason: 'already_used', message: 'Bu kuponu daha önce kullandınız.' });
       }
+
       return res.status(200).json({
         ok: true,
         code: coupon.code,
@@ -146,7 +184,7 @@ export default async function handler(req, res) {
         method: 'GET',
         headers: { 'Prefer': '' }
       });
-      return res.status(200).json({ users: Array.isArray(data) ? data : [] });
+      return res.status(200).json({ users: Array.isArray(data.data) ? data.data : [] });
     }
   }
 
