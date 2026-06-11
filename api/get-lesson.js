@@ -12,35 +12,31 @@ export default async function handler(req, res) {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
-  const today = new Date().toISOString().split('T')[0];
 
   async function query(filter) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/lesson_cards?${filter}&limit=1`, {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      }
-    });
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/lesson_cards?${filter}&order=batch_date.desc&limit=1`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
     const data = await r.json();
     return Array.isArray(data) && data.length > 0 ? data[0] : null;
   }
 
-  // 1. Bugün + profile'a özel
-  let row = await query(`tool_name=eq.${encodeURIComponent(tool)}&profile_key=eq.${encodeURIComponent(profileKey)}&batch_date=eq.${today}`);
+  // 1. Profile'a özel en son kart
+  let row = await query(
+    `tool_name=eq.${encodeURIComponent(tool)}&profile_key=eq.${encodeURIComponent(profileKey)}`
+  );
 
-  // 2. Bugün + default
+  // 2. Profile yoksa default'un en sonuncusu
   if (!row && profileKey !== 'default') {
-    row = await query(`tool_name=eq.${encodeURIComponent(tool)}&profile_key=eq.default&batch_date=eq.${today}`);
+    row = await query(
+      `tool_name=eq.${encodeURIComponent(tool)}&profile_key=eq.default`
+    );
   }
 
-  // 3. En son tarihli
+  // 3. Hiçbiri yoksa herhangi bir kart
   if (!row) {
-    const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/lesson_cards?tool_name=eq.${encodeURIComponent(tool)}&order=batch_date.desc&limit=1`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-    );
-    const data = await r.json();
-    row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    row = await query(`tool_name=eq.${encodeURIComponent(tool)}`);
   }
 
   if (!row) return res.status(404).json({ cards: [], message: 'No cards available' });
