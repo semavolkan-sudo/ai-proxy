@@ -9,7 +9,7 @@ import { getUserFromRequest, applyCors } from './_lib/auth.js';
 // Uygulamanın kullanmasına izin verilen modeller ve token tavanı.
 // İhtiyaca göre güncelle.
 const ALLOWED_MODELS = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6'];
-const MAX_TOKENS_CAP = 2048;
+const MAX_TOKENS_CAP = 4096;
 
 export default async function handler(req, res) {
   applyCors(req, res);

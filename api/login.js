@@ -86,11 +86,13 @@ export default async function handler(req, res) {
     body: JSON.stringify({ last_seen: new Date().toISOString() }),
   });
 
+  const isAdmin = !!(process.env.ADMIN_EMAIL && cleanEmail === process.env.ADMIN_EMAIL.toLowerCase());
   const token = signToken({
     email: cleanEmail,
     name: user.name || '',
     plan: user.plan || 'Starter',
     profileKey: user.profile_key || 'default',
+    admin: isAdmin,
   });
 
   return res.status(200).json({
@@ -101,6 +103,7 @@ export default async function handler(req, res) {
       name: user.name || '',
       plan: user.plan || 'Starter',
       profileKey: user.profile_key || 'default',
+      admin: isAdmin,
       xp: user.xp || 0,
       streak: user.streak || 0,
       progress: user.progress || {},

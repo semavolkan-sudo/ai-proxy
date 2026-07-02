@@ -1,5 +1,7 @@
 export const config = { maxDuration: 10 };
 
+import { getUserFromRequest, applyCors } from './_lib/auth.js';
+
 async function sbFetch(path, options = {}) {
   const url = process.env.SUPABASE_URL + '/rest/v1/' + path;
   const r = await fetch(url, {
@@ -18,14 +20,14 @@ async function sbFetch(path, options = {}) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  applyCors(req, res);
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-cron-key');
-  res.setHeader('Access-Control-Max-Age', '86400');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const cronKey = req.headers['x-cron-key'] || req.query.key;
-  if (cronKey !== process.env.CRON_SECRET) {
+  const authUser = getUserFromRequest(req);
+  const isAdmin = !!(authUser && authUser.admin);
+  if (cronKey !== process.env.CRON_SECRET && !isAdmin) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
