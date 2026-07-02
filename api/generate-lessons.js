@@ -41,17 +41,24 @@ const PROFILES = {
   ileri_kariyer: 'Yönetici / ileri düzey kullanıcı. Strateji, ekip verimliliği ve ileri kullanım senaryolarına odaklan.',
 };
 
-function buildPrompt(tool, profileCtx) {
+function buildPrompt(tool, profileCtx, part) {
+  const SPECS = {
+    temel: '4 kart üret, konu TEMEL: araç nedir, neden önemli, nasıl başlanır, temel kavramlar.',
+    ozellik: '4 kart üret, konu ÖZELLİKLER: bu aracın en kritik 4 özelliği, her biri ayrı kart.',
+    sablon: '4 kart üret, konu PROMPT ŞABLONLARI: kopyala-kullan hazır 4 komut şablonu ve kullanım senaryosu.',
+    ileri: '3 kart üret, konu İLERİ İPUÇLARI: çoğu kullanıcının bilmediği 3 pratik ileri teknik.',
+  };
+  const spec = SPECS[part] || SPECS.temel;
   return `Sen AI eğitim uzmanısın. ${tool} aracını öğretiyorsun.
 Kurallar: Emin olmadığın arayüz detayını (buton adı, menü yeri) yazma; işlevi tarif et. Arayüzler değişebildiği için gerektiğinde resmî dokümana yönlendir. Uydurma isim, istatistik veya vaka verme. Kazanç garantisi verme.
 Öğrenci: ${profileCtx}
 
-15 kart üret (her kartın content alanı 600 karakteri geçmesin): ilk 5 kart TEMEL (araç nedir, neden önemli, başlangıç, temel kavramlar, ekosistem), sonraki 5 kart ÖZELLİKLER (en kritik 5 özellik), son 5 kart PROMPT ŞABLONLARI (kopyala-kullan hazır komutlar ve kullanım senaryoları).
+${spec} (her kartın content alanı 600 karakteri geçmesin.)
 SADECE geçerli bir JSON dizisi döndür, başka hiçbir şey yazma:
 [{"title":"başlık","content":"2-3 cümle sade Türkçe açıklama.\\n\\n💡 Örnek Senaryo (temsili):\\nDurum: [Bir meslek grubundan temsili kullanıcı - gerçek kişi ismi UYDURMA]\\nYaklaşım: [Araçla izlediği adımlar ve kullandığı örnek komut]\\nKazanım: [Beklenen somut fayda - uydurma istatistik ve garanti dili YOK]\\n\\n📊 Adım Adım:\\n1️⃣ [Adım]: [Uygulanabilir talimat veya örnek komut]\\n2️⃣ [Adım]: [Ne yapılır, ne beklenir]\\n3️⃣ [Adım]: [Beklenen çıktı]\\n\\n⚡ Pro İpucu: [Hemen uygulanabilir pratik öneri]","icon":"emoji"}]`;
 }
 
-async function generateCards(tool, profileKey) {
+async function callHaiku(prompt) {
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -61,8 +68,8 @@ async function generateCards(tool, profileKey) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
-      messages: [{ role: 'user', content: buildPrompt(tool, PROFILES[profileKey]) }],
+      max_tokens: 5000,
+      messages: [{ role: 'user', content: prompt }],
     }),
   });
   const data = await resp.json();
@@ -73,7 +80,20 @@ async function generateCards(tool, profileKey) {
   const start = text.indexOf('['); const end = text.lastIndexOf(']');
   if (start === -1 || end === -1) throw new Error('JSON bulunamadı');
   const cards = JSON.parse(text.slice(start, end + 1));
-  if (!Array.isArray(cards) || cards.length < 5) throw new Error('kart sayısı yetersiz');
+  if (!Array.isArray(cards)) throw new Error('JSON dizi değil');
+  return cards;
+}
+
+// 15 kartı DÖRT paralel parçada üret (4+4+4+3) → her çağrı çok kısa, timeout-safe
+async function generateCards(tool, profileKey) {
+  const ctx = PROFILES[profileKey];
+  const parts = ['temel', 'ozellik', 'sablon', 'ileri'];
+  const settled = await Promise.allSettled(parts.map((pt) => callHaiku(buildPrompt(tool, ctx, pt))));
+  let cards = [];
+  for (const r of settled) {
+    if (r.status === 'fulfilled' && Array.isArray(r.value)) cards = cards.concat(r.value);
+  }
+  if (cards.length < 5) throw new Error('kart sayısı yetersiz: ' + cards.length);
   return cards;
 }
 
