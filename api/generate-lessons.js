@@ -84,21 +84,32 @@ async function callHaiku(prompt) {
   return cards;
 }
 
-// 15 kartı DÖRT parçada SIRAYLA üret (rate-limit güvenli) → toplam ~24sn, timeout-safe
-// Kısmi başarı: bir parça boş dönse bile eldeki kartlar kaydedilir.
+// 15 kartı 2+2 üret: her turda 2 parça PARALEL (rate-limit güvenli), 2 tur (timeout güvenli ~30sn)
+// Kısmi başarı: bir parça boş/hata dönse bile eldeki kartlar kaydedilir.
+async function genPart(tool, ctx, pt, profileKey) {
+  try {
+    const part = await callHaiku(buildPrompt(tool, ctx, pt));
+    if (Array.isArray(part) && part.length) return part;
+    console.log('PART_EMPTY', tool, profileKey, pt);
+    return [];
+  } catch (e) {
+    console.log('PART_FAIL', tool, profileKey, pt, String(e.message).slice(0, 120));
+    return [];
+  }
+}
 async function generateCards(tool, profileKey) {
   const ctx = PROFILES[profileKey];
-  const parts = ['temel', 'ozellik', 'sablon', 'ileri'];
-  let cards = [];
-  for (const pt of parts) {
-    try {
-      const part = await callHaiku(buildPrompt(tool, ctx, pt));
-      if (Array.isArray(part) && part.length) cards = cards.concat(part);
-      else console.log('PART_EMPTY', tool, profileKey, pt);
-    } catch (e) {
-      console.log('PART_FAIL', tool, profileKey, pt, String(e.message).slice(0, 120));
-    }
-  }
+  // Tur 1: temel + özellik paralel
+  const g1 = await Promise.all([
+    genPart(tool, ctx, 'temel', profileKey),
+    genPart(tool, ctx, 'ozellik', profileKey),
+  ]);
+  // Tur 2: şablon + ileri paralel
+  const g2 = await Promise.all([
+    genPart(tool, ctx, 'sablon', profileKey),
+    genPart(tool, ctx, 'ileri', profileKey),
+  ]);
+  const cards = [].concat(g1[0], g1[1], g2[0], g2[1]);
   if (cards.length < 3) throw new Error('kart sayısı yetersiz: ' + cards.length);
   return cards;
 }
