@@ -137,9 +137,13 @@ export default async function handler(req, res) {
     return res.status(200).json({ tools: TOOLS.length, covered: rows.length, missing, oldest: rows[0] || null });
   }
 
-  // ── CRON: hedef aracı seç → eksik olan öncelikli, yoksa en eski güncellenen ──
+  // ── Hedef araç: ?tool= verilmişse onu üret (panel), yoksa otomatik seç (cron) ──
   let target = null;
-  for (const t of TOOLS) {
+  const requestedTool = req.query.tool;
+  if (requestedTool && TOOLS.includes(requestedTool)) {
+    target = requestedTool;
+  }
+  for (const t of (target ? [] : TOOLS)) {
     if (profileKeys.some(pk => !have.has(t + '::' + pk))) { target = t; break; }
   }
   if (!target) {
