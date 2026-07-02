@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   const { secret, pass } = req.body || {};
-  if (!process.env.BOOTSTRAP_SECRET || secret !== process.env.BOOTSTRAP_SECRET) {
+  if (!process.env.JWT_SECRET || secret !== process.env.JWT_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   if (!pass || String(pass).length < 8) {
