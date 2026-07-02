@@ -153,8 +153,8 @@ export default async function handler(req, res) {
   }
 
   const started = new Date().toISOString();
-  const results = []; let ok = 0, fail = 0;
-  for (const pk of profileKeys) {
+  // 3 seviye PARALEL üretilir: toplam süre "en uzun tek üretim" olur, 60 sn sınırına sığar
+  const settled = await Promise.all(profileKeys.map(async (pk) => {
     try {
       const cards = await generateCards(target, pk);
       const save = await sbFetch('lesson_cards', {
@@ -164,12 +164,15 @@ export default async function handler(req, res) {
           cards, updated_at: new Date().toISOString()
         })
       });
-      if (save.ok) { ok++; results.push({ tool: target, profile: pk, count: cards.length }); }
-      else { fail++; results.push({ tool: target, profile: pk, error: 'db' }); }
+      if (save.ok) return { tool: target, profile: pk, count: cards.length };
+      return { tool: target, profile: pk, error: 'db' };
     } catch (e) {
-      fail++; results.push({ tool: target, profile: pk, error: String(e.message).slice(0, 80) });
+      return { tool: target, profile: pk, error: String(e.message).slice(0, 80) };
     }
-  }
+  }));
+  const results = settled;
+  const ok = settled.filter(r => !r.error).length;
+  const fail = settled.length - ok;
 
   await sbFetch('batch_logs', {
     method: 'POST', prefer: 'return=minimal',
