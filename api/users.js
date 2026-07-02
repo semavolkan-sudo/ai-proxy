@@ -85,6 +85,40 @@ export default async function handler(req, res) {
     return res.status(200).json(checkCoupon(couponCode, userEmail));
   }
 
+  // ── Kayıt doğrulama kodu e-postası (açık) ───────────────────
+  if (action === 'send-verify-code') {
+    const { code } = req.body || {};
+    const target = email || (user && user.email);
+    if (!target || !/^\d{6}$/.test(String(code || ''))) {
+      return res.status(400).json({ ok: false });
+    }
+    const emailResp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + process.env.RESEND_API_KEY },
+      body: JSON.stringify({
+        from: 'AI Certification Academy <noreply@cert-academy.ai>',
+        to: [String(target).toLowerCase().trim()],
+        subject: 'Doğrulama Kodun - AI Certification Academy',
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#070711;color:#fff;padding:32px;border-radius:16px;">
+            <div style="text-align:center;margin-bottom:24px;">
+              <div style="font-size:32px;margin-bottom:8px;">✉️</div>
+              <h1 style="color:#d4a853;font-size:22px;margin:0;">E-posta Doğrulama</h1>
+            </div>
+            <p style="color:#ccccdd;line-height:1.6;">AI Certification Academy kaydını tamamlamak için doğrulama kodun:</p>
+            <div style="text-align:center;margin:28px 0;">
+              <div style="display:inline-block;background:rgba(212,168,83,0.12);border:1px solid #d4a853;border-radius:12px;padding:16px 32px;font-size:30px;font-weight:800;letter-spacing:8px;color:#f0c060;">${code}</div>
+            </div>
+            <p style="color:#888899;font-size:12px;line-height:1.6;">Bu kodu sen istemediysen bu e-postayı yok sayabilirsin.</p>
+            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:24px 0;">
+            <p style="color:#555577;font-size:11px;text-align:center;">AI Certification Academy · cert-academy.ai · info@cert-academy.ai</p>
+          </div>
+        `,
+      }),
+    });
+    return res.status(200).json({ ok: emailResp.ok });
+  }
+
   // ── Kayıt (açık; yalnızca YENİ kullanıcı oluşturur) ─────────
   if (action === 'register' && user && user.email) {
     const cleanEmail = user.email.toLowerCase().trim();
