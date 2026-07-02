@@ -100,7 +100,7 @@ function xpFor(score) { return 20 + score * 16; }
 
 var PLANS = [
   { name: "Starter",  price: 29,  color: "#6366f1", popular: false,
-    features: ["14 gün erişim (ilk yarı)", "Ders içerikleri", "Günlük quizler", "XP ve Streak sistemi", "Temel sertifika"] },
+    features: ["İlk 14 günün müfredatı (Gün 1-14)", "Ders içerikleri", "Günlük quizler", "XP ve Streak sistemi", "Temel sertifika"] },
   { name: "Pro",      price: 79,  color: "#d4a853", popular: true,
     features: ["28 gün tam erişim", "Tüm dersler", "XP ve Streak sistemi", "AI Mentor (4 seans)", "Bonus içerikler", "Premium sertifika"] },
   { name: "Business", price: 199, color: "#10a37f", popular: false,
@@ -108,34 +108,34 @@ var PLANS = [
 ];
 
 var COURSES = [
-  { day:1,  tool:"ChatGPT",            icon:"\uD83E\uDD16", color:"#10a37f", desc:"Dunyanin en popüler AI asistanini ustaca kullanin" },
-  { day:2,  tool:"Claude",             icon:"\uD83E\uDDE0", color:"#d4a853", desc:"Anthropic'in gelismis dil modeliyle calisin" },
-  { day:3,  tool:"Gemini",             icon:"\u2728",         color:"#4285f4", desc:"Google'in multimodal AI sistemini kesfedin" },
+  { day:1,  tool:"ChatGPT",            icon:"\uD83E\uDD16", color:"#10a37f", desc:"Dünyanın en popüler AI asistanını ustaca kullanın" },
+  { day:2,  tool:"Claude",             icon:"\uD83E\uDDE0", color:"#d4a853", desc:"Anthropic'in gelişmiş dil modeliyle çalışın" },
+  { day:3,  tool:"Gemini",             icon:"\u2728",         color:"#4285f4", desc:"Google'ın multimodal AI sistemini keşfedin" },
   { day:4,  tool:"Perplexity",         icon:"\uD83D\uDD0D", color:"#6366f1", desc:"AI destekli araştırma motorunu öğrenin" },
-  { day:5,  tool:"Deepseek",           icon:"\uD83D\uDE80", color:"#ef4444", desc:"Cin'in guclu acik kaynak modelini kullanin" },
-  { day:6,  tool:"Copilot",            icon:"\uD83D\uDCBB", color:"#0078d4", desc:"Microsoft AI asistaniyla uretkenlik" },
-  { day:7,  tool:"Grok",               icon:"\u26A1",         color:"#1d9bf0", desc:"xAI gerçek zamanli AI modelini kesfedin" },
-  { day:8,  tool:"Lovable",            icon:"\uD83D\uDC9C", color:"#8b5cf6", desc:"AI ile uygulama gelistirmeyi ogreyin" },
-  { day:9,  tool:"Manus",              icon:"\uD83E\uDD1D", color:"#f59e0b", desc:"Otonom AI ajan sistemini kullanin" },
-  { day:10, tool:"NanoBanana",         icon:"\uD83C\uDF4C", color:"#fbbf24", desc:"Yeni nesil AI araclarini kesfedin" },
-  { day:11, tool:"Leonardo AI",        icon:"\uD83C\uDFA8", color:"#ec4899", desc:"AI gorsel uretiminde uzmanlasin" },
+  { day:5,  tool:"Deepseek",           icon:"\uD83D\uDE80", color:"#ef4444", desc:"Çin'in güçlü açık kaynak modelini kullanın" },
+  { day:6,  tool:"Copilot",            icon:"\uD83D\uDCBB", color:"#0078d4", desc:"Microsoft AI asistanıyla üretkenlik" },
+  { day:7,  tool:"Grok",               icon:"\u26A1",         color:"#1d9bf0", desc:"xAI gerçek zamanlı AI modelini keşfedin" },
+  { day:8,  tool:"Lovable",            icon:"\uD83D\uDC9C", color:"#8b5cf6", desc:"AI ile uygulama geliştirmeyi öğrenin" },
+  { day:9,  tool:"Manus",              icon:"\uD83E\uDD1D", color:"#f59e0b", desc:"Otonom AI ajan sistemini kullanın" },
+  { day:10, tool:"NanoBanana",         icon:"\uD83C\uDF4C", color:"#fbbf24", desc:"Yeni nesil AI araçlarını keşfedin" },
+  { day:11, tool:"Leonardo AI",        icon:"\uD83C\uDFA8", color:"#ec4899", desc:"AI görsel üretiminde uzmanlaşın" },
   { day:12, tool:"Meta AI",            icon:"\uD83C\uDF10", color:"#0668e1", desc:"Meta AI ekosistemini ogreyin" },
-  { day:13, tool:"Assembly AI",        icon:"\uD83C\uDF99", color:"#14b8a6", desc:"Ses transkripsiyon AI kullanin" },
+  { day:13, tool:"Assembly AI",        icon:"\uD83C\uDF99", color:"#14b8a6", desc:"Ses transkripsiyon AI kullanın" },
   { day:14, tool:"Canva AI",           icon:"\uD83D\uDD8C", color:"#7c3aed", desc:"AI destekli tasarım araçlarını öğrenin" },
-  { day:15, tool:"Veo 3",              icon:"\uD83C\uDFAC", color:"#dc2626", desc:"Google video uretim AI kesfedin" },
-  { day:16, tool:"Sora 2",             icon:"\uD83C\uDFA5", color:"#059669", desc:"OpenAI video AI modelini kullanin" },
+  { day:15, tool:"Veo 3",              icon:"\uD83C\uDFAC", color:"#dc2626", desc:"Google video üretim AI keşfedin" },
+  { day:16, tool:"Sora 2",             icon:"\uD83C\uDFA5", color:"#059669", desc:"OpenAI video AI modelini kullanın" },
   { day:17, tool:"Kimi",               icon:"\uD83C\uDF19", color:"#7c3aed", desc:"Moonshot AI guclu modelini ogreyin" },
-  { day:18, tool:"Kling",              icon:"\uD83C\uDFAD", color:"#b45309", desc:"Kuaishou video AI kesfedin" },
+  { day:18, tool:"Kling",              icon:"\uD83C\uDFAD", color:"#b45309", desc:"Kuaishou video AI keşfedin" },
   { day:19, tool:"Midjourney",         icon:"\uD83C\uDF0C", color:"#4f46e5", desc:"En popüler gorsel AI aracinda uzmanlasin" },
   { day:20, tool:"Runway ML",          icon:"\u2702",         color:"#16a34a", desc:"AI video duzenleme platformu ogreyin" },
-  { day:21, tool:"ElevenLabs",         icon:"\uD83D\uDD0A", color:"#ea580c", desc:"AI ses klonlama teknolojisini kullanin" },
-  { day:22, tool:"Pika Labs",          icon:"\u26A1",         color:"#0891b2", desc:"Hizli video olusturma AI kesfedin" },
+  { day:21, tool:"ElevenLabs",         icon:"\uD83D\uDD0A", color:"#ea580c", desc:"AI ses klonlama teknolojisini kullanın" },
+  { day:22, tool:"Pika Labs",          icon:"\u26A1",         color:"#0891b2", desc:"Hizli video olusturma AI keşfedin" },
   { day:23, tool:"Stable Diffusion",   icon:"\uD83C\uDF0A", color:"#7c3aed", desc:"Acik kaynak gorsel AI uzmanlasin" },
   { day:24, tool:"Make.com",           icon:"\uD83D\uDD17", color:"#9333ea", desc:"AI otomasyon akışları kurun" },
   { day:25, tool:"Zapier AI",          icon:"\u26A1",         color:"#ff6b35", desc:"AI destekli is akislarini otomatize edin" },
   { day:26, tool:"Notion AI",          icon:"\uD83D\uDCDD", color:"#374151", desc:"AI destekli verimlilik sistemleri kurun" },
   { day:27, tool:"Prompt Engineering", icon:"\uD83C\uDFAF", color:"#b91c1c", desc:"Etkili prompt yazma tekniklerini ogreyin" },
-  { day:28, tool:"AI Is Stratejisi",   icon:"\uD83D\uDCBC", color:"#065f46", desc:"AI ile gelir modelleri olusturun" },
+  { day:28, tool:"AI Is Stratejisi",   icon:"\uD83D\uDCBC", color:"#065f46", desc:"AI ile gelir modelleri oluşturun" },
 ];
 
 var MOCK_LB = [
@@ -593,8 +593,6 @@ function MentorChat(props) {
 
 // ─── LANDING ─────────────────────────────────────────────────────────────────
 function Landing(props) {
-  var [count, setCount] = useState(847);
-  useEffect(function() { var t = setInterval(function() { setCount(function(c) { return c + Math.floor(Math.random()*3); }); }, 9000); return function() { clearInterval(t); }; }, []);
   var reviews = [
     { name:"Ayşe K.", role:"Pazarlama Müdürü", text:"28 günde tüm AI araçları öğrendim. Ekibimden çok daha hızlıyım.", r:5 },
     { name:"Mehmet T.", role:"Freelancer", text:"AI Mentor özelliği inanılmaz. Sorularımı anında yanıtlıyor.", r:5 },
@@ -607,7 +605,7 @@ function Landing(props) {
         <div style={{ fontSize:18, fontWeight:700, color:"#fff", whiteSpace:"nowrap" }}><span style={{ background:"linear-gradient(135deg,#f5cc6a,#7c5cfc)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>AI</span> Certification Academy</div>
       </div>
       <div style={{ position:"relative", textAlign:"center", padding:"72px 20px 80px", background:"radial-gradient(ellipse at 50% 0%,rgba(124,92,252,0.18) 0%,rgba(201,168,76,0.10) 30%,transparent 70%)" }}>
-        <div style={{ display:"inline-block", background:"rgba(201,168,76,0.10)", border:"1px solid rgba(201,168,76,0.4)", borderRadius:100, padding:"7px 18px", fontSize:12, color:GOLD2, marginBottom:28, fontFamily:FONT_MONO }}>{"Bu ay " + count + " kişi kayıt oldu"}</div>
+        <div style={{ display:"inline-block", background:"rgba(201,168,76,0.10)", border:"1px solid rgba(201,168,76,0.4)", borderRadius:100, padding:"7px 18px", fontSize:12, color:GOLD2, marginBottom:28, fontFamily:FONT_MONO }}>{"28 araç · 28 gün · Günde 15 dakika"}</div>
         <div style={{ fontSize:80, fontWeight:800, lineHeight:1, background:"linear-gradient(135deg,#f5cc6a,#7c5cfc)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>AI</div>
         <div style={{ fontSize:36, fontWeight:700, marginBottom:20, color:TEXT }}>Certification Academy</div>
         <p style={{ fontSize:16, color:TEXT2, maxWidth:460, margin:"0 auto 40px", lineHeight:1.65 }}>28 araç - 28 gün - Günde 15 dakika<br/><span style={{ color:GOLD2 }}>AI sertifikanı kazan, kariyerini dönüştür.</span></p>
@@ -708,6 +706,74 @@ function Landing(props) {
 }
 
 // ─── REGISTER ────────────────────────────────────────────────────────────────
+function B2BSection() {
+  var [company, setCompany] = useState("");
+  var [cname, setCname] = useState("");
+  var [cemail, setCemail] = useState("");
+  var [csize, setCsize] = useState("1-10");
+  var [cphone, setCphone] = useState("");
+  var [sent, setSent] = useState(false);
+  var [sending, setSending] = useState(false);
+  var [berr, setBerr] = useState("");
+  function submitLead() {
+    setBerr("");
+    if (!company.trim() || !cname.trim() || !cemail.trim() || cemail.indexOf("@") < 1) { setBerr("Şirket adı, ad soyad ve geçerli bir e-posta gerekli."); return; }
+    setSending(true);
+    fetch(USERS_API, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "demo-request", lead: { company: company.trim(), name: cname.trim(), email: cemail.trim().toLowerCase(), size: csize, phone: cphone.trim() } }) })
+      .then(function(r) { return r.json(); })
+      .then(function(d) { setSending(false); if (d && d.ok) { setSent(true); } else { setBerr("Gönderilemedi. Lütfen tekrar deneyin."); } })
+      .catch(function() { setSending(false); setBerr("Bağlantı hatası. Lütfen tekrar deneyin."); });
+  }
+  var inputSt = { width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, padding:"12px 14px", color:TEXT, fontSize:14, fontFamily:FONT, outline:"none", boxSizing:"border-box" };
+  var labelSt = { display:"block", color:TEXT2, fontSize:11, fontWeight:600, marginBottom:6, textTransform:"uppercase", letterSpacing:"1px" };
+  return (
+    <div style={{ background:BG, color:TEXT, fontFamily:FONT, padding:"72px 20px 88px", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ maxWidth:980, margin:"0 auto", display:"flex", gap:48, flexWrap:"wrap", alignItems:"flex-start" }}>
+        <div style={{ flex:"1 1 380px", minWidth:300 }}>
+          <div style={{ display:"inline-block", background:"rgba(201,168,76,0.10)", border:"1px solid rgba(201,168,76,0.4)", borderRadius:100, padding:"6px 16px", fontSize:12, color:GOLD2, marginBottom:20, fontFamily:FONT_MONO }}>ŞİRKETLER İÇİN</div>
+          <div style={{ fontSize:32, fontWeight:800, lineHeight:1.25, marginBottom:16 }}>Ekibinize AI yetkinliğini<br/>28 günde kazandırın</div>
+          <p style={{ color:TEXT2, fontSize:15, lineHeight:1.7, marginBottom:28 }}>Eğitmen maliyeti yok, kurulum yok. Çalışanlarınız günde 15 dakikayla 28 AI aracını uygulayarak öğrenir; siz ilerlemeyi tek panelden izlersiniz.</p>
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}><span style={{ color:GOLD2, fontSize:18 }}>✓</span><span style={{ color:TEXT2, fontSize:14, lineHeight:1.6 }}><b style={{ color:TEXT }}>Toplu lisans:</b> Ekibinizin tamamı için tek pakette atanmış erişim kodları.</span></div>
+            <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}><span style={{ color:GOLD2, fontSize:18 }}>✓</span><span style={{ color:TEXT2, fontSize:14, lineHeight:1.6 }}><b style={{ color:TEXT }}>İlerleme raporu:</b> Kim hangi günde, tamamlama oranı ne — ekip paneli ve lider tablosu.</span></div>
+            <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}><span style={{ color:GOLD2, fontSize:18 }}>✓</span><span style={{ color:TEXT2, fontSize:14, lineHeight:1.6 }}><b style={{ color:TEXT }}>Kurumsal sertifika:</b> Programı bitiren her çalışana isimli sertifika.</span></div>
+          </div>
+        </div>
+        <div style={{ flex:"1 1 360px", minWidth:300, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.10)", borderRadius:16, padding:28 }}>
+          {sent ? (
+            <div style={{ textAlign:"center", padding:"36px 8px" }}>
+              <div style={{ fontSize:40, marginBottom:14 }}>🤝</div>
+              <div style={{ fontSize:19, fontWeight:700, marginBottom:8 }}>Talebiniz alındı</div>
+              <p style={{ color:TEXT2, fontSize:14, lineHeight:1.6 }}>24 saat içinde {cemail} adresinden size ulaşıp ekibinize özel demo planlayacağız.</p>
+            </div>
+          ) : (
+            <div>
+              <div style={{ fontSize:18, fontWeight:700, marginBottom:18 }}>Demo talep edin</div>
+              <div style={{ marginBottom:14 }}><label style={labelSt}>Şirket Adı</label><input value={company} onChange={function(e){ setCompany(e.target.value); }} style={inputSt} placeholder="Örn. Acme Teknoloji" /></div>
+              <div style={{ marginBottom:14 }}><label style={labelSt}>Ad Soyad</label><input value={cname} onChange={function(e){ setCname(e.target.value); }} style={inputSt} placeholder="Adınız Soyadınız" /></div>
+              <div style={{ marginBottom:14 }}><label style={labelSt}>İş E-postası</label><input value={cemail} onChange={function(e){ setCemail(e.target.value); }} style={inputSt} placeholder="ad@sirket.com" /></div>
+              <div style={{ display:"flex", gap:12, marginBottom:14, flexWrap:"wrap" }}>
+                <div style={{ flex:"1 1 140px" }}><label style={labelSt}>Çalışan Sayısı</label>
+                  <select value={csize} onChange={function(e){ setCsize(e.target.value); }} style={inputSt}>
+                    <option value="1-10">1-10</option><option value="11-50">11-50</option><option value="51-200">51-200</option><option value="200+">200+</option>
+                  </select></div>
+                <div style={{ flex:"1 1 140px" }}><label style={labelSt}>Telefon (opsiyonel)</label><input value={cphone} onChange={function(e){ setCphone(e.target.value); }} style={inputSt} placeholder="05xx xxx xx xx" /></div>
+              </div>
+              {berr && <div style={{ color:"#ef4444", fontSize:13, marginBottom:12 }}>{berr}</div>}
+              <button onClick={submitLead} disabled={sending}
+                style={{ width:"100%", background: sending ? "#444" : "linear-gradient(135deg,#d4a853,#f0c060)", color:"#08080f", border:"none", borderRadius:10, padding:"13px 0", fontSize:15, fontWeight:700, cursor: sending ? "not-allowed" : "pointer" }}>
+                {sending ? "Gönderiliyor..." : "Demo Talep Et"}
+              </button>
+              <p style={{ color:"#666677", fontSize:11, marginTop:12, lineHeight:1.5, textAlign:"center" }}>Bilgileriniz yalnızca sizinle iletişim için kullanılır.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Register(props) {
   var [name, setName] = useState("");
   var [email, setEmail] = useState("");
@@ -781,7 +847,7 @@ function Register(props) {
           <div style={{ fontSize:40, fontWeight:800, color:GOLD }}>AI</div>
           <div style={{ fontSize:17, fontWeight:600 }}>Certification Academy</div>
           {inviteData && <div style={{ marginTop:10, background:"rgba(16,163,127,0.1)", border:"1px solid rgba(16,163,127,0.3)", borderRadius:8, padding:"8px 16px", fontSize:13, color:"#10a37f" }}>Ekip davetini kabul ediyorsun</div>}
-          {!inviteData && props.plan && <div style={{ marginTop:10, display:"inline-block", background:"rgba(212,168,83,0.1)", border:"1px solid rgba(212,168,83,0.3)", borderRadius:7, padding:"5px 14px", fontSize:12, color:GOLD }}>{props.plan.name + " - $" + props.plan.price + "/ay"}</div>}
+          {!inviteData && props.plan && <div style={{ marginTop:10, display:"inline-block", background:"rgba(212,168,83,0.1)", border:"1px solid rgba(212,168,83,0.3)", borderRadius:7, padding:"5px 14px", fontSize:12, color:GOLD }}>{props.plan.name + " - $" + props.plan.price + " · tek seferlik"}</div>}
         </div>
         <div style={{ background:CARD_BG, border:"1px solid "+CARD_BORDER, borderRadius:16, padding:28 }}>
           <h2 style={{ color:"#fff", fontWeight:700, marginBottom:20, fontSize:19 }}>Hesap Oluştur</h2>
@@ -3222,10 +3288,10 @@ function Auth(props) {
     }
   }
 
-  function verifySubmit() {
+  function verifySubmit(force) {
     setErr("");
-    if (!codeInput || codeInput.length !== 6) { setErr("6 haneli kodu gir"); return; }
-    if (codeInput !== verifyCode) { setErr("Kod hatalı. Tekrar dene."); return; }
+    if (!force && (!codeInput || codeInput.length !== 6)) { setErr("6 haneli kodu gir"); return; }
+    if (!force && codeInput !== verifyCode) { setErr("Kod hatalı. Tekrar dene."); return; }
     setLoading(true);
     setTimeout(function() {
       setLoading(false);
@@ -3385,6 +3451,7 @@ function Auth(props) {
                 style={{ width:"100%", background: loading ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#c9a84c,#f5cc6a)", color: loading ? TEXT2 : "#08080f", border:"none", borderRadius:14, padding:"15px 0", fontSize:15, fontWeight:700, cursor: loading ? "not-allowed" : "pointer", boxShadow: loading ? "none" : SHADOW_GOLD, transition:"all 0.2s ease", fontFamily:FONT, marginBottom:10 }}>
                 {loading ? "Doğrulanıyor..." : "Doğrula ve Devam Et"}
               </button>
+              <button onClick={function() { verifySubmit(true); }} style={{ width:"100%", background:"none", border:"none", color:"#888899", textDecoration:"underline", cursor:"pointer", fontSize:13, marginTop:12, fontFamily:FONT }}>E-posta doğrulamayı şimdilik atla →</button>
               <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginTop:6 }}>
                 <button onClick={cancelVerify} style={{ background:"transparent", border:"none", color:TEXT2, cursor:"pointer", fontFamily:FONT, padding:0 }}>← Geri</button>
                 <button onClick={resendCode} style={{ background:"transparent", border:"none", color:GOLD, cursor:"pointer", fontFamily:FONT, padding:0, fontWeight:600 }}>Kodu Tekrar Gönder</button>
@@ -3596,9 +3663,9 @@ function PlanSelectInner(props) {
                 <div style={{ fontSize:14, fontWeight:700, marginBottom:8, color:TEXT2, textTransform:"uppercase", letterSpacing:"1.5px" }}>{plan.name}</div>
                 {userCoupon && !userCoupon.isFree && userCoupon.discount ? (
                   <div style={{ marginBottom:24 }}>
-                    <div style={{ fontSize:14, color:"#888899", textDecoration:"line-through" }}>${plan.price}/ay</div>
+                    <div style={{ fontSize:14, color:"#888899", textDecoration:"line-through" }}>${plan.price}</div>
                     <div style={{ fontSize:36, fontWeight:800, color: plan.popular ? GOLD2 : plan.color, fontFamily:FONT_MONO }}>
-                      ${Math.round(plan.price * (1 - userCoupon.discount/100))}<span style={{ fontSize:14, color:"#888899" }}>/ay</span>
+                      ${Math.round(plan.price * (1 - userCoupon.discount/100))}<span style={{ fontSize:14, color:"#888899" }}> tek seferlik</span>
                     </div>
                     <div style={{ fontSize:11, color:"#10a37f", fontWeight:600 }}>%{userCoupon.discount} indirim uygulandı</div>
                   </div>
@@ -3740,10 +3807,10 @@ export default function App() {
     });
   }
 
-  function handleRegDone(u) { setUser(u); saveUser(u); setPage("planselect"); }
+  function handleRegDone(u) { setUser(u); saveUser(u); setPage("onboarding"); }
   function handleOnbDone(prof) { updateUser(function(p) { return Object.assign({}, p, { profile:prof }); }); setPage("dashboard"); }
   function handleLogout() { setUser(null); deleteUser(); clearAuthToken(); setPage("landing"); }
-  function handleLessonStart(l) { setLesson(l); setPage("lesson"); }
+  function handleLessonStart(l) { if (user && !user.paid && l && l.day > 1) { setPage("planselect"); return; } setLesson(l); setPage("lesson"); }
   function handleLessonDone(day, sc, xp) {
     updateUser(function(prev) {
       var np = Object.assign({}, prev.progress || {}); np[day] = "done";
@@ -3774,7 +3841,7 @@ export default function App() {
       />
       {xpToast && <XPToast xp={xpToast} onDone={function() { setXpToast(null); }} />}
       {mentor && user && <MentorChat user={user} onClose={function() { setMentor(false); }} />}
-      {page === "landing" && <Landing onGo={function(target) { if (target === "auth") setPage("auth"); }} />}
+      {page === "landing" && <><Landing onGo={function(target) { if (target === "auth") setPage("auth"); }} /><B2BSection /></>}
       {page === "auth" && <Auth
         onRegister={function(u) {
           setUser(u);
@@ -3802,7 +3869,7 @@ export default function App() {
           }
         }}
       />}
-      {page === "planselect" && <PlanSelect onPick={function(p) {
+      {page === "planselect" && <><PlanSelect onPick={function(p) {
         setPlan(p);
         updateUser(function(prev) { return Object.assign({}, prev, { plan: p }); });
         try {
@@ -3810,7 +3877,7 @@ export default function App() {
           window.open(buildPaymentUrl(p.name, em), "_blank");
         } catch(e) {}
         // Ödeme tamamlanmadan dashboard'a geçilmez; planselect ekranında kalınır
-      }} />}
+      }} /><div style={{ textAlign:"center", padding:"0 0 48px", background:BG }}><button onClick={function() { setPage(user && user.profile ? "dashboard" : "onboarding"); }} style={{ background:"none", border:"none", color:"#888899", textDecoration:"underline", cursor:"pointer", fontSize:14, fontFamily:FONT }}>Şimdilik ücretsiz devam et (Gün 1 açık) →</button></div></>}
       {page === "onboarding" && <Onboarding onDone={handleOnbDone} />}
       {page === "dashboard" && <Dashboard user={user} onLesson={handleLessonStart} onLogout={handleLogout} onMentor={function() { setMentor(true); }} />}
       {page === "lesson" && <Lesson lesson={lesson} user={user} onDone={handleLessonDone} onBack={function() { setPage("dashboard"); }} />}
