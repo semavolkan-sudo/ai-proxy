@@ -85,6 +85,31 @@ export default async function handler(req, res) {
     return res.status(200).json(checkCoupon(couponCode, userEmail));
   }
 
+  // ── B2B demo talebi (açık) ──────────────────────────────────
+  if (action === 'demo-request') {
+    const { lead } = req.body || {};
+    if (!lead || !lead.company || !lead.name || !lead.email || String(lead.email).indexOf('@') < 1) {
+      return res.status(400).json({ ok: false });
+    }
+    const r = await sb('aica_leads', {
+      method: 'POST',
+      body: JSON.stringify({
+        company: String(lead.company).slice(0, 200),
+        name: String(lead.name).slice(0, 120),
+        email: String(lead.email).toLowerCase().trim().slice(0, 200),
+        phone: String(lead.phone || '').slice(0, 40),
+        size: String(lead.size || '').slice(0, 20),
+      }),
+    });
+    return res.status(200).json({ ok: r.ok });
+  }
+
+  if (action === 'list-leads') {
+    if (!isAdmin) return res.status(401).json({ error: 'Unauthorized' });
+    const data = await sb('aica_leads?order=created_at.desc&limit=200', { method: 'GET', headers: { Prefer: '' } });
+    return res.status(200).json({ leads: Array.isArray(data.data) ? data.data : [] });
+  }
+
   // ── Kayıt doğrulama kodu e-postası (açık) ───────────────────
   if (action === 'send-verify-code') {
     const { code } = req.body || {};

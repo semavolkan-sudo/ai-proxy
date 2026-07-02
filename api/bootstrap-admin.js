@@ -30,8 +30,18 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   const { secret, pass } = req.body || {};
-  if (!process.env.JWT_SECRET || secret !== process.env.JWT_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  const envSecret = process.env.JWT_SECRET || '';
+  if (!envSecret || secret !== envSecret) {
+    // TEK SEFERLİK TEŞHİS: değerleri DEĞİL, sadece uzunlukları ve ilk/son karakteri loglar
+    console.log('BOOTSTRAP_DEBUG',
+      'envLen=' + envSecret.length,
+      'gotLen=' + (secret ? String(secret).length : 0),
+      'envHead=' + envSecret.slice(0, 3),
+      'gotHead=' + (secret ? String(secret).slice(0, 3) : ''),
+      'envTail=' + envSecret.slice(-3),
+      'gotTail=' + (secret ? String(secret).slice(-3) : '')
+    );
+    return res.status(401).json({ error: 'Unauthorized', envLen: envSecret.length, gotLen: secret ? String(secret).length : 0 });
   }
   if (!pass || String(pass).length < 8) {
     return res.status(400).json({ error: 'pass required (min 8 chars)' });
