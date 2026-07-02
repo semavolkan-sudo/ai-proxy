@@ -46,7 +46,7 @@ function buildPrompt(tool, profileCtx) {
 Kurallar: Emin olmadığın arayüz detayını (buton adı, menü yeri) yazma; işlevi tarif et. Arayüzler değişebildiği için gerektiğinde resmî dokümana yönlendir. Uydurma isim, istatistik veya vaka verme. Kazanç garantisi verme.
 Öğrenci: ${profileCtx}
 
-15 kart üret: ilk 5 kart TEMEL (araç nedir, neden önemli, başlangıç, temel kavramlar, ekosistem), sonraki 5 kart ÖZELLİKLER (en kritik 5 özellik), son 5 kart PROMPT ŞABLONLARI (kopyala-kullan hazır komutlar ve kullanım senaryoları).
+15 kart üret (her kartın content alanı 600 karakteri geçmesin): ilk 5 kart TEMEL (araç nedir, neden önemli, başlangıç, temel kavramlar, ekosistem), sonraki 5 kart ÖZELLİKLER (en kritik 5 özellik), son 5 kart PROMPT ŞABLONLARI (kopyala-kullan hazır komutlar ve kullanım senaryoları).
 SADECE geçerli bir JSON dizisi döndür, başka hiçbir şey yazma:
 [{"title":"başlık","content":"2-3 cümle sade Türkçe açıklama.\\n\\n💡 Örnek Senaryo (temsili):\\nDurum: [Bir meslek grubundan temsili kullanıcı - gerçek kişi ismi UYDURMA]\\nYaklaşım: [Araçla izlediği adımlar ve kullandığı örnek komut]\\nKazanım: [Beklenen somut fayda - uydurma istatistik ve garanti dili YOK]\\n\\n📊 Adım Adım:\\n1️⃣ [Adım]: [Uygulanabilir talimat veya örnek komut]\\n2️⃣ [Adım]: [Ne yapılır, ne beklenir]\\n3️⃣ [Adım]: [Beklenen çıktı]\\n\\n⚡ Pro İpucu: [Hemen uygulanabilir pratik öneri]","icon":"emoji"}]`;
 }
@@ -61,11 +61,12 @@ async function generateCards(tool, profileKey) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4096,
+      max_tokens: 8000,
       messages: [{ role: 'user', content: buildPrompt(tool, PROFILES[profileKey]) }],
     }),
   });
   const data = await resp.json();
+  if (data && data.error) throw new Error('API: ' + (data.error.message || data.error.type || 'bilinmeyen'));
   let text = '';
   if (Array.isArray(data.content)) for (const b of data.content) text += b.text || '';
   text = text.replace(/```json|```/g, '').trim();
@@ -167,6 +168,7 @@ export default async function handler(req, res) {
       if (save.ok) return { tool: target, profile: pk, count: cards.length };
       return { tool: target, profile: pk, error: 'db' };
     } catch (e) {
+      console.log('GEN_FAIL', target, pk, String(e.message).slice(0, 200));
       return { tool: target, profile: pk, error: String(e.message).slice(0, 80) };
     }
   }));
