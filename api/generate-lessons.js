@@ -157,6 +157,34 @@ export default async function handler(req, res) {
     target = (sorted.length > 0 ? sorted[0][0] : TOOLS[0]);
   }
 
+  // ── Tek seviye modu: ?tool= & ?profile= verilirse yalnız o seviyeyi üret (panel, timeout-safe) ──
+  const singleProfile = req.query.profile;
+  if (target && singleProfile && profileKeys.includes(singleProfile)) {
+    const startedOne = new Date().toISOString();
+    let one;
+    try {
+      const cards = await generateCards(target, singleProfile);
+      const save = await sbFetch('lesson_cards', {
+        method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal',
+        body: JSON.stringify({ tool_name: target, profile_key: singleProfile, batch_date: today, cards, updated_at: new Date().toISOString() })
+      });
+      one = save.ok ? { tool: target, profile: singleProfile, count: cards.length } : { tool: target, profile: singleProfile, error: 'db' };
+    } catch (e) {
+      console.log('GEN_FAIL', target, singleProfile, String(e.message).slice(0, 200));
+      one = { tool: target, profile: singleProfile, error: String(e.message).slice(0, 80) };
+    }
+    await sbFetch('batch_logs', {
+      method: 'POST', prefer: 'return=minimal',
+      body: JSON.stringify({
+        batch_date: today, started_at: startedOne, finished_at: new Date().toISOString(),
+        status: one.error ? 'failed' : 'success', triggered_by: isAdmin ? 'admin' : 'cron-key',
+        total_tools: 1, total_profiles: 1,
+        success_count: one.error ? 0 : 1, fail_count: one.error ? 1 : 0, results: [one]
+      })
+    });
+    return res.status(200).json({ ok: !one.error, tool: target, profile: singleProfile, result: one });
+  }
+
   const started = new Date().toISOString();
   // 3 seviye PARALEL üretilir: toplam süre "en uzun tek üretim" olur, 60 sn sınırına sığar
   const settled = await Promise.all(profileKeys.map(async (pk) => {
